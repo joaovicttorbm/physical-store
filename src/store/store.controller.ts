@@ -48,4 +48,15 @@ export class StoreController {
     return this.storeService.storeById(id);
    }
 
+   // GET /stores/cep/:cep
+  @Get('cep/:cep')
+  @HttpCode(HttpStatus.OK)
+  async storeByCep(@Param('cep') cep: string) {
+    if (!cep.match(/^\d{5}-?\d{3}$/)) {
+      return {
+      message: 'Invalid CEP format',
+      };
+    }
+    return this.storeService.storeByCep(cep);
+  }
 }
