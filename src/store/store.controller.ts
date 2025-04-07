@@ -19,4 +19,21 @@ export class StoreController {
     return this.storeService.listAll();
   }
 
+  // GET /stores/state?state=SP
+  @Get('state')
+  @HttpCode(HttpStatus.OK)
+  async storeByState(@Query('state') state: string) {
+    if (!state) {
+      return {
+        message: 'State is required',
+      };
+    }
+    if (state.length !== 2) {
+      return {
+        message: 'State must be 2 characters',
+      };
+    }
+    return this.storeService.storeByState(state);
+  }
+
 }

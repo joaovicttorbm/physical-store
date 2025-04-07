@@ -15,6 +15,21 @@ export class StoreService {
   ) {}
   async listAll(): Promise<any> {
     const stores = await this.storeModel.find();
+    if (stores.length === 0) {
+      throw new NotFoundException('No stores found');
+    }
+    return {
+      stores,
+      limit: stores.length,
+      offset: 0,
+      total: stores.length,
+    };
+  }
+  async storeByState(state: string): Promise<any> {
+    const stores = await this.storeModel.find({ state: state.toUpperCase() });
+    if (stores.length === 0) {
+      throw new NotFoundException(`No stores found in state: ${state}`);
+    }
     return {
       stores,
       limit: stores.length,
