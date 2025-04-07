@@ -1,20 +1,18 @@
-export class CreateStoreDto {
-    storeID: string;
-    storeName: string;
-    takeOutInStore: boolean;
-    shippingTimeInDays: number;
-  
-    postalCode: string;
-    address1: string;
-    address2: string;
-    address3: string;
-    city: string;
-    district: string;
-    state: string;
-    country: string;
-    type: string;
-  
-    telephoneNumber: string;
-    emailAddress: string;
-  }
-  
+export interface CreateStoreDto {
+  storeName: string;
+  takeOutInStore: boolean;
+  shippingTimeInDays: number;
+  latitude: string;
+  longitude: string;
+  address1: string;
+  address2?: string;
+  address3?: string;
+  city: string;
+  district: string;
+  state: string;
+  type: 'LOJA' | 'PDV';
+  country: string;
+  postalCode: string;
+  telephoneNumber: string;
+  emailAddress: string;
+}

@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Store, StoreDocument } from './schemas/store.schema';
+import { Store } from './schemas/store.schema';
 import { CreateStoreDto } from './dto/create-store.dto';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
@@ -12,7 +12,7 @@ dotenv.config();
 export class StoreService {
   private readonly GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || '';
   constructor(
-    @InjectModel(Store.name) private storeModel: Model<StoreDocument>,
+    @InjectModel('Store') private storeModel: Model<Store>,
   ) {}
   async listAll(): Promise<any> {
     const stores = await this.storeModel.find();
@@ -168,5 +168,10 @@ export class StoreService {
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  async createStore(dto: CreateStoreDto): Promise<Store> {
+    const newStore = new this.storeModel(dto);
+    return await newStore.save();
   }
 }

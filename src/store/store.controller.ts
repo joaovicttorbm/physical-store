@@ -5,8 +5,11 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Post,
+  Body,
 } from '@nestjs/common';
 import { StoreService } from './store.service';
+import { CreateStoreDto } from './dto/create-store.dto';
 
 @Controller('stores')
 export class StoreController {
@@ -58,5 +61,11 @@ export class StoreController {
       };
     }
     return this.storeService.storeByCep(cep);
+  }
+  // POST /stores
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  async createStore(@Body() createStoreDto: CreateStoreDto) {
+    return this.storeService.createStore(createStoreDto);
   }
 }

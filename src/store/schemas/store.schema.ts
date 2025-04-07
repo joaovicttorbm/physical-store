@@ -1,60 +1,39 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
 
-export type StoreDocument = Store & Document;
-
-@Schema()
-export class Store {
-  @Prop({ required: true })
-  storeID: string;
-
-  @Prop({ required: true })
+export interface Store extends Document {
   storeName: string;
-
-  @Prop({ default: true })
   takeOutInStore: boolean;
-
-  @Prop({ required: true })
   shippingTimeInDays: number;
-
-  @Prop({ required: true })
   latitude: string;
-
-  @Prop({ required: true })
   longitude: string;
-
-  @Prop()
   address1: string;
-
-  @Prop()
-  address2: string;
-
-  @Prop()
-  address3: string;
-
-  @Prop()
+  address2?: string;
+  address3?: string;
   city: string;
-
-  @Prop()
   district: string;
-
-  @Prop()
   state: string;
-
-  @Prop()
-  type: string; // PDV | LOJA
-
-  @Prop()
+  type: 'LOJA' | 'PDV';
   country: string;
-
-  @Prop()
   postalCode: string;
-
-  @Prop()
   telephoneNumber: string;
-
-  @Prop()
   emailAddress: string;
 }
 
-export const StoreSchema = SchemaFactory.createForClass(Store);
+export const StoreSchema = new Schema<Store>({
+  storeName: { type: String, required: true },
+  takeOutInStore: { type: Boolean, required: true },
+  shippingTimeInDays: { type: Number, required: true },
+  latitude: { type: String, required: true },
+  longitude: { type: String, required: true },
+  address1: { type: String, required: true },
+  address2: { type: String },
+  address3: { type: String },
+  city: { type: String, required: true },
+  district: { type: String, required: true },
+  state: { type: String, required: true },
+  type: { type: String, enum: ['LOJA', 'PDV'], required: true },
+  country: { type: String, required: true },
+  postalCode: { type: String, required: true },
+  telephoneNumber: { type: String, required: true },
+  emailAddress: { type: String, required: true },
+});
