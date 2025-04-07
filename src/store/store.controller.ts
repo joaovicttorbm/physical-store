@@ -36,4 +36,16 @@ export class StoreController {
     return this.storeService.storeByState(state);
   }
 
+   // GET /stores/:id
+   @Get(':id')
+   @HttpCode(HttpStatus.OK)
+   async storeById(@Param('id') id: string) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return {
+        message: 'Invalid ID format',
+      };
+    }
+    return this.storeService.storeById(id);
+   }
+
 }

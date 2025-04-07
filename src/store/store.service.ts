@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Store, StoreDocument } from './schemas/store.schema';
@@ -36,6 +36,13 @@ export class StoreService {
       offset: 0,
       total: stores.length,
     };
+  }
+  async storeById(id: string): Promise<Store> {
+    const store = await this.storeModel.findById(id);
+    if (!store) {
+      throw new HttpException('Store not found', HttpStatus.NOT_FOUND);
+    }
+    return store;
   }
 
   
