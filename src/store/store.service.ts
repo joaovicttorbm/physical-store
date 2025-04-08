@@ -7,7 +7,6 @@ import axios from 'axios';
 import * as dotenv from 'dotenv';
 import { fetchAddressFromCep } from 'src/common/utils/viacep.util';
 import { fetchDistances } from 'src/common/utils/google-maps.util';
-import { DELIVERY_OPTIONS } from 'src/common/constants/delivery-options.constant';
 import { buildResponse } from './mappers/store.mapper';
 import { mapStoreWithDistance } from './mappers/store-by-cep.mapper';
 
