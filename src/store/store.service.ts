@@ -5,6 +5,9 @@ import { Store } from './schemas/store.schema';
 import { CreateStoreDto } from './dto/create-store.dto';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
+import { fetchAddressFromCep } from 'src/common/utils/viacep.util';
+import { fetchDistances } from 'src/common/utils/google-maps.util';
+import { DELIVERY_OPTIONS } from 'src/common/constants/delivery-options.constant';
 
 dotenv.config();
 
@@ -89,12 +92,7 @@ export class StoreService {
    */
   async storeByCep(cep: string): Promise<any> {
     try {
-      const viaCepUrl = `https://viacep.com.br/ws/${cep}/json/`;
-      const { data: viaCepData } = await axios.get(viaCepUrl);
-
-      if (viaCepData.erro) {
-        throw new Error('CEP inválido');
-      }
+      const viaCepData = await fetchAddressFromCep(cep);
       const stores = await this.storeModel.find();
       if (stores.length === 0) {
         throw new NotFoundException('No stores found');
@@ -105,16 +103,11 @@ export class StoreService {
         (store) => `${store.latitude},${store.longitude}`,
       );
 
-      const mapsUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
+      const distanceData = await fetchDistances(
         origins,
-      )}&destinations=${encodeURIComponent(
-        destinations.join('|'),
-      )}&key=${this.GOOGLE_MAPS_API_KEY}&language=pt-BR&units=metric`;
-
-      const { data: distanceData } = await axios.get(mapsUrl);
-      if (distanceData.status !== 'OK') {
-        throw new Error('Erro ao calcular distâncias');
-      }
+        destinations,
+        this.GOOGLE_MAPS_API_KEY,
+      );
 
       const results = stores.map((store, i) => {
         const element = distanceData.rows[0].elements[i];
@@ -126,24 +119,24 @@ export class StoreService {
         const value = [];
         if (store.type === 'PDV' && distanceKm <= 50) {
           value.push({
-        prazo: '1 dias úteis',
-        price: 'R$ 15,00',
-        description: 'Motoboy',
+            prazo: `${store.shippingTimeInDays} dias úteis`,
+            price: DELIVERY_OPTIONS.PDV.price,
+            description: DELIVERY_OPTIONS.PDV.description,
           });
         } else if (store.type === 'LOJA') {
           value.push(
-        {
-          prazo: '2 dias úteis',
-          codProdutoAgencia: '04014',
-          price: 'R$ 27,00',
-          description: 'Sedex a encomenda expressa dos Correios',
-        },
-        {
-          prazo: '6 dias úteis',
-          codProdutoAgencia: '04510',
-          price: 'R$ 25,50',
-          description: 'PAC a encomenda economica dos Correios',
-        },
+            {
+              prazo: '2 dias úteis',
+              codProdutoAgencia: DELIVERY_OPTIONS.LOJA.sedex.codProdutoAgencia,
+              price: 'R$ 27,00',
+              description: DELIVERY_OPTIONS.LOJA.sedex.description,
+            },
+            {
+              prazo: '6 dias úteis',
+              codProdutoAgencia: DELIVERY_OPTIONS.LOJA.pac.codProdutoAgencia,
+              price: 'R$ 25,50',
+              description: DELIVERY_OPTIONS.LOJA.pac.description,
+            },
           );
         }
 

@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { CreateStoreDto } from './dto/create-store.dto';
+import { validateCep } from 'src/common/utils/cep-validator.util';
 
 @Controller('stores')
 export class StoreController {
@@ -55,11 +56,7 @@ export class StoreController {
   @Get('cep/:cep')
   @HttpCode(HttpStatus.OK)
   async storeByCep(@Param('cep') cep: string) {
-    if (!cep.match(/^\d{5}-?\d{3}$/)) {
-      return {
-      message: 'Invalid CEP format',
-      };
-    }
+    validateCep(cep);
     return this.storeService.storeByCep(cep);
   }
   // POST /stores
