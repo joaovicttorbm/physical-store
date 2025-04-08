@@ -14,36 +14,56 @@ export class StoreService {
   constructor(
     @InjectModel('Store') private storeModel: Model<Store>,
   ) {}
+  private formatStore(store: Store): any {
+    return {
+      storeID: store._id,
+      storeName: store.storeName,
+      takeOutInStore: store.takeOutInStore,
+      shippingTimeInDays: store.shippingTimeInDays,
+      latitude: store.latitude,
+      longitude: store.longitude,
+      address1: store.address1,
+      address2: store.address2,
+      address3: store.address3,
+      city: store.city,
+      district: store.district,
+      state: store.state,
+      type: store.type,
+      country: store.country,
+      postalCode: store.postalCode,
+      telephoneNumber: store.telephoneNumber,
+      emailAddress: store.emailAddress,
+    };
+  }
+  private buildResponse(stores: Store[]): any {
+    const formattedStores = stores.map((store) => this.formatStore(store));
+    return {
+      stores: formattedStores,
+      limit: stores.length,
+      offset: 0,
+      total: stores.length,
+    };
+  }
   async listAll(): Promise<any> {
     const stores = await this.storeModel.find();
     if (stores.length === 0) {
       throw new NotFoundException('No stores found');
     }
-    return {
-      stores,
-      limit: stores.length,
-      offset: 0,
-      total: stores.length,
-    };
+    return this.buildResponse(stores);
   }
   async storeByState(state: string): Promise<any> {
     const stores = await this.storeModel.find({ state: state.toUpperCase() });
     if (stores.length === 0) {
       throw new NotFoundException(`No stores found in state: ${state}`);
     }
-    return {
-      stores,
-      limit: stores.length,
-      offset: 0,
-      total: stores.length,
-    };
+    return this.buildResponse(stores);
   }
   async storeById(id: string): Promise<Store> {
     const store = await this.storeModel.findById(id);
     if (!store) {
       throw new HttpException('Store not found', HttpStatus.NOT_FOUND);
     }
-    return store;
+    return this.buildResponse([store]);
   }
 
   /**
@@ -73,7 +93,6 @@ export class StoreService {
       if (viaCepData.erro) {
         throw new Error('CEP inválido');
       }
-      
       const stores = await this.storeModel.find();
       if (stores.length === 0) {
         throw new NotFoundException('No stores found');
@@ -94,80 +113,69 @@ export class StoreService {
       if (distanceData.status !== 'OK') {
         throw new Error('Erro ao calcular distâncias');
       }
-      const results = [];
-      const pins = [];
 
-      for (let i = 0; i < stores.length; i++) {
+      const results = stores.map((store, i) => {
         const element = distanceData.rows[0].elements[i];
-        const store = stores[i];
-
-        if (element.status !== 'OK') continue;
+        if (element.status !== 'OK') return null;
 
         const distanceKm = element.distance.value / 1000;
         const distanceText = element.distance.text;
 
-        let storeResult: any = {
+        const value = [];
+        if (store.type === 'PDV' && distanceKm <= 50) {
+          value.push({
+        prazo: '1 dias úteis',
+        price: 'R$ 15,00',
+        description: 'Motoboy',
+          });
+        } else if (store.type === 'LOJA') {
+          value.push(
+        {
+          prazo: '2 dias úteis',
+          codProdutoAgencia: '04014',
+          price: 'R$ 27,00',
+          description: 'Sedex a encomenda expressa dos Correios',
+        },
+        {
+          prazo: '6 dias úteis',
+          codProdutoAgencia: '04510',
+          price: 'R$ 25,50',
+          description: 'PAC a encomenda economica dos Correios',
+        },
+          );
+        }
+
+        return {
           name: store.storeName,
           city: store.city,
           postalCode: store.postalCode,
           type: store.type,
           distance: distanceText,
-          value: [],
+          value,
         };
+      }).filter(Boolean);
 
-        if (store.type === 'PDV') {
-          if (distanceKm <= 50) {
-            storeResult.value.push({
-              prazo: `${store.shippingTimeInDays} dias úteis`,
-              price: 'R$ 15,00',
-              description: 'Motoboy',
-            });
-          } else {
-            continue; // PDV fora do raio de entrega
-          }
-        } else if (store.type === 'LOJA') {
-          // Chamada à API dos Correios para calcular frete
-          // Exemplo fictício para evitar bloqueio (real: usar WebService ou alternativa)
-          storeResult.value = [
-            {
-              prazo: '2 dias úteis',
-              codProdutoAgencia: '04014',
-              price: 'R$ 27,00',
-              description: 'Sedex a encomenda expressa dos Correios',
-            },
-            {
-              prazo: '6 dias úteis',
-              codProdutoAgencia: '04510',
-              price: 'R$ 25,50',
-              description: 'PAC a encomenda economica dos Correios',
-            },
-          ];
-        }
-
-        results.push(storeResult);
-
-        pins.push({
-          position: {
-            lat: store.latitude,
-            lng: store.longitude,
-          },
-          title: store.storeName,
-        });
-      }
+      const pins = stores.map((store) => ({
+        position: {
+          lat: store.latitude,
+          lng: store.longitude,
+        },
+        title: store.storeName,
+      }));
 
       return {
         stores: results,
         pins,
-        limit: results.length,
-        offset: 0,
-        total: results.length,
+        limit: 1,
+        offset: 1,
+        total: 100,
       };
-    } catch (error) {
+        } catch (error) {
       throw new HttpException(
         error.message || 'Erro ao buscar lojas por CEP',
         HttpStatus.BAD_REQUEST,
       );
-    }
+        }
   }
 
   async createStore(dto: CreateStoreDto): Promise<Store> {
