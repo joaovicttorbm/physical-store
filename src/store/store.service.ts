@@ -5,8 +5,8 @@ import { Store } from './schemas/store.schema';
 import { StoreDto } from './dto/store.dto';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
-import { fetchAddressFromCep } from 'src/common/utils/viacep.util';
-import { fetchDistances } from 'src/common/utils/google-maps.util';
+import { fetchAddressFromCep } from '../common/utils/viacep.util';
+import { fetchDistances } from '../common/utils/google-maps.util';
 import { buildResponse } from './mappers/store.mapper';
 import { mapStoreWithDistance } from './mappers/store-by-cep.mapper';
 
@@ -62,22 +62,24 @@ export class StoreService {
         this.GOOGLE_MAPS_API_KEY,
       );
       const results = stores
-      .map((store, i) => mapStoreWithDistance(store, distanceData.rows[0].elements[i]))
-      .filter(Boolean).sort((a, b) => {
-        const distanceA = parseFloat(a.distance.replace(/[^\d.]/g, ''));
-        const distanceB = parseFloat(b.distance.replace(/[^\d.]/g, ''));
-        return distanceA - distanceB;
-      });
+        .map((store, i) => mapStoreWithDistance(store, distanceData.rows[0].elements[i]))
+        .filter(Boolean)
+        .sort((a, b) => {
+          const distanceA = parseFloat(a.distance.replace(/[^\d.]/g, ''));
+          const distanceB = parseFloat(b.distance.replace(/[^\d.]/g, ''));
+          return distanceA - distanceB;
+        });
+
       return {
         stores: results,
         total: results.length,
       };
-        } catch (error) {
+    } catch (error) {
       throw new HttpException(
         error.message || 'Erro ao buscar lojas por CEP',
         HttpStatus.BAD_REQUEST,
       );
-        }
+    }
   }
 
   async createStore(dto: StoreDto): Promise<Store> {
@@ -92,8 +94,7 @@ export class StoreService {
   
       // 2. Obter as coordenadas usando a API do Google Maps
       const address = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
-      console.log('Endereço enviado para o Google Maps:', address);
-      
+            
       const mapsUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
         address,
       )}&key=${this.GOOGLE_MAPS_API_KEY}`;

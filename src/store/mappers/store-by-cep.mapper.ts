@@ -1,5 +1,5 @@
 import { Store } from '../schemas/store.schema';
-import { DELIVERY_OPTIONS } from 'src/common/constants/delivery-options.constant';
+import { DELIVERY_OPTIONS } from '../../common/constants/delivery-options.constant';
 
 export function mapStoreWithDistance(store: Store, element: any): any {
   if (element.status !== 'OK') return null;
