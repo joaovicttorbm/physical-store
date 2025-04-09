@@ -7,9 +7,9 @@ import {
   HttpStatus,
   Post,
   Body,
+  HttpException,
 } from '@nestjs/common';
 import { StoreService } from './store.service';
-import { validateCep } from 'src/common/utils/cep-validator.util';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { StoreResponseDto } from './dto/store-response.dto';
 import { StoreDto } from './dto/store.dto';
@@ -86,7 +86,9 @@ export class StoreController {
     type: StoreResponseDto,
   })
   async storeByCep(@Param('cep') cep: string) {
-    validateCep(cep);
+    if (!cep.match(/^\d{5}-?\d{3}$/)) {
+      throw new HttpException('Invalid CEP', HttpStatus.BAD_REQUEST);
+    }
     return this.storeService.storeByCep(cep);
   }
   // POST /stores
