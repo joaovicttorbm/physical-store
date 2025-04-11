@@ -44,14 +44,10 @@ export class StoreController {
   })
   async storeByState(@Query('state') state: string) {
     if (!state) {
-      return {
-        message: 'State is required',
-      };
+      throw new HttpException('State is required', HttpStatus.BAD_REQUEST);
     }
     if (state.length !== 2) {
-      return {
-        message: 'State must be 2 characters',
-      };
+      throw new HttpException('State must be 2 characters', HttpStatus.BAD_REQUEST);
     }
     return this.storeService.storeByState(state);
   }
@@ -68,9 +64,7 @@ export class StoreController {
     })
    async storeById(@Param('id') id: string) {
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-      return {
-        message: 'Invalid ID format',
-      };
+      throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
     }
     return this.storeService.storeById(id);
    }

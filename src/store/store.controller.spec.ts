@@ -33,6 +33,7 @@ describe('StoreController', () => {
     expect(controller).toBeDefined();
   });
 
+  // Testes para o método listAll
   describe('listAll', () => {
     it('should return a list of stores', async () => {
       const mockResponse = { stores: [], limit: 0, offset: 0, total: 0 };
@@ -44,6 +45,7 @@ describe('StoreController', () => {
     });
   });
 
+  // Testes para o método storeByState
   describe('storeByState', () => {
     it('should return stores by state', async () => {
       const mockResponse = { stores: [], limit: 0, offset: 0, total: 0 };
@@ -54,17 +56,26 @@ describe('StoreController', () => {
       expect(mockStoreService.storeByState).toHaveBeenCalledWith('SP');
     });
 
-    it('should return an error if state is invalid', async () => {
-      const result = await controller.storeByState('');
-      expect(result).toEqual({ message: 'State is required' });
+    it('should throw an error if state is empty', async () => {
+      try {
+        await controller.storeByState('');
+      } catch (error) {
+        expect(error.response).toEqual('State is required');
+        expect(error.status).toEqual(HttpStatus.BAD_REQUEST);
+      }
     });
 
-    it('should return an error if state length is not 2', async () => {
-      const result = await controller.storeByState('S');
-      expect(result).toEqual({ message: 'State must be 2 characters' });
+    it('should throw an error if state length is not 2', async () => {
+      try {
+        await controller.storeByState('S');
+      } catch (error) {
+        expect(error.response).toEqual('State must be 2 characters');
+        expect(error.status).toEqual(HttpStatus.BAD_REQUEST);
+      }
     });
   });
 
+  // Testes para o método storeById
   describe('storeById', () => {
     it('should return a store by ID', async () => {
       const mockResponse = { stores: [], limit: 0, offset: 0, total: 0 };
@@ -75,12 +86,17 @@ describe('StoreController', () => {
       expect(mockStoreService.storeById).toHaveBeenCalledWith('60f4fe2f9c80c7fe15a5eadd');
     });
 
-    it('should return an error if ID format is invalid', async () => {
-      const result = await controller.storeById('invalid-id');
-      expect(result).toEqual({ message: 'Invalid ID format' });
+    it('should throw an error if ID format is invalid', async () => {
+      try {
+        await controller.storeById('invalid-id');
+      } catch (error) {
+        expect(error.response).toEqual('Invalid ID format');
+        expect(error.status).toEqual(HttpStatus.BAD_REQUEST);
+      }
     });
   });
 
+  // Testes para o método storeByCep
   describe('storeByCep', () => {
     it('should return stores by CEP', async () => {
       const mockResponse = { stores: [], limit: 0, offset: 0, total: 0 };
