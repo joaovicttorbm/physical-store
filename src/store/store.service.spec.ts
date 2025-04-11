@@ -4,7 +4,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { fetchAddressFromCep } from '../common/utils/viacep.util';
 import { fetchDistances } from '../common/utils/google-maps.util';
-import axios from 'axios';
+import { getDeliveryOptions } from '../common/utils/delivery-options.util';
 
 jest.mock('../common/utils/viacep.util', () => ({
   fetchAddressFromCep: jest.fn(),
@@ -12,6 +12,10 @@ jest.mock('../common/utils/viacep.util', () => ({
 
 jest.mock('../common/utils/google-maps.util', () => ({
   fetchDistances: jest.fn(),
+}));
+
+jest.mock('../common/utils/delivery-options.util', () => ({
+  getDeliveryOptions: jest.fn(),
 }));
 
 describe('StoreService', () => {
@@ -140,6 +144,7 @@ describe('StoreService', () => {
       expect(fetchDistances).toHaveBeenCalled();
     });
 
+    // ok;
     it('should throw HttpException if no stores are found', async () => {
       const mockViaCepData = { logradouro: 'Rua Exemplo', localidade: 'São Paulo', uf: 'SP' };
       (fetchAddressFromCep as jest.Mock).mockResolvedValue(mockViaCepData);
