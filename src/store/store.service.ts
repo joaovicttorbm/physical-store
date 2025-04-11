@@ -9,6 +9,7 @@ import { fetchAddressFromCep } from '../common/utils/viacep.util';
 import { fetchDistances } from '../common/utils/google-maps.util';
 import { buildResponse } from './mappers/store.mapper';
 import { mapStoreWithDistance } from './mappers/store-by-cep.mapper';
+import { getDeliveryOptions } from '../common/utils/delivery-options.util';
 
 dotenv.config();
 
@@ -50,29 +51,46 @@ export class StoreService {
       if (stores.length === 0) {
         throw new NotFoundException('No stores found');
       }
-
+  
       const origins = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
       const destinations = stores.map(
         (store) => `${store.latitude},${store.longitude}`,
       );
-
+  
       const distanceData = await fetchDistances(
         origins,
         destinations,
         this.GOOGLE_MAPS_API_KEY,
       );
-      const results = stores
-        .map((store, i) => mapStoreWithDistance(store, distanceData.rows[0].elements[i]))
-        .filter(Boolean)
-        .sort((a, b) => {
-          const distanceA = parseFloat(a.distance.replace(/[^\d.]/g, ''));
-          const distanceB = parseFloat(b.distance.replace(/[^\d.]/g, ''));
-          return distanceA - distanceB;
-        });
-
+  
+      const results = await Promise.all(
+        stores.map(async (store, i) => {
+          const element = distanceData.rows[0].elements[i];
+          if (element.status !== 'OK') return null;
+  
+          const distanceKm = element.distance.value / 1000;
+          if (distanceKm > 100) return null;
+          
+          const deliveryOptions = await getDeliveryOptions(
+            store,
+            cep,
+            distanceKm,
+            process.env.MELHOR_ENVIO_API_KEY, 
+          );
+  
+          return mapStoreWithDistance(store, element.distance.text, deliveryOptions);
+        }),
+      );
+  
+      const filteredResults = results.filter(Boolean).sort((a, b) => {
+        const distanceA = parseFloat(a.distance.replace(/[^\d.]/g, ''));
+        const distanceB = parseFloat(b.distance.replace(/[^\d.]/g, ''));
+        return distanceA - distanceB;
+      });
+  
       return {
-        stores: results,
-        total: results.length,
+        stores: filteredResults,
+        total: filteredResults.length,
       };
     } catch (error) {
       throw new HttpException(
