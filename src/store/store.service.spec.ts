@@ -144,7 +144,6 @@ describe('StoreService', () => {
       expect(fetchDistances).toHaveBeenCalled();
     });
 
-    // ok;
     it('should throw HttpException if no stores are found', async () => {
       const mockViaCepData = { logradouro: 'Rua Exemplo', localidade: 'São Paulo', uf: 'SP' };
       (fetchAddressFromCep as jest.Mock).mockResolvedValue(mockViaCepData);
