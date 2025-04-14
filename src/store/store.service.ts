@@ -69,7 +69,8 @@ export class StoreService {
           if (element.status !== 'OK') return null;
   
           const distanceKm = element.distance.value / 1000;
-          if (distanceKm > 100) return null;
+          // limit the distance to 100 km
+          // if (distanceKm > 100) return null;
           
           const deliveryOptions = await getDeliveryOptions(
             store,
@@ -81,12 +82,19 @@ export class StoreService {
           return mapStoreWithDistance(store, element.distance.text, deliveryOptions);
         }),
       );
+      // limit the distance to 100 km
+      // const filteredResults = results.filter(Boolean).sort
+      const filteredResults = results.sort((a, b) => {
+        if (a.type === 'PDV' && b.type !== 'PDV') return -1;
+        if (a.type !== 'PDV' && b.type === 'PDV') return 1;
   
-      const filteredResults = results.filter(Boolean).sort((a, b) => {
-        const distanceA = parseFloat(a.distance.replace(/[^\d.]/g, ''));
-        const distanceB = parseFloat(b.distance.replace(/[^\d.]/g, ''));
+        const distanceA = parseFloat(a.distance.replace(/[^\d.,]/g, '').replace(',', '.'));
+        const distanceB = parseFloat(b.distance.replace(/[^\d.,]/g, '').replace(',', '.'));
         return distanceA - distanceB;
       });
+      if (filteredResults.length === 0) {
+        throw new NotFoundException('No stores found within 100 km radius');
+      }
   
       return {
         stores: filteredResults,
@@ -102,15 +110,13 @@ export class StoreService {
 
   async createStore(dto: StoreDto): Promise<Store> {
     try {
-      // 1. Validar o CEP usando a API ViaCEP
       const viaCepUrl = `https://viacep.com.br/ws/${dto.postalCode}/json/`;
       const { data: viaCepData } = await axios.get(viaCepUrl);
   
       if (viaCepData.erro) {
         throw new HttpException('Invalid CEP', HttpStatus.BAD_REQUEST);
       }
-  
-      // 2. Obter as coordenadas usando a API do Google Maps
+
       const address = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
             
       const mapsUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
@@ -124,11 +130,9 @@ export class StoreService {
   
       const location = mapsData.results[0].geometry.location;
   
-      // 3. Adicionar as coordenadas ao DTO
       dto.latitude = location.lat.toString();
       dto.longitude = location.lng.toString();
   
-      // 4. Criar e salvar a nova loja
       const newStore = new this.storeModel(dto);
       return await newStore.save();
     } catch (error) {
