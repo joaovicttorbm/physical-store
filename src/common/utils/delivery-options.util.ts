@@ -1,6 +1,8 @@
 import { Store } from 'src/store/schemas/store.schema';
 import { calculateShipment } from './melhor-envio.util';
 
+const AGENCIAS_VALIDAS = ['SEDEX', 'Rodoviário', 'Express', 'Standard', 'Loggi Ponto'];
+
 export async function getDeliveryOptions(
   store: Store,
   customerPostalCode: string,
@@ -46,10 +48,12 @@ export async function getDeliveryOptions(
     try {
       const shipmentData = await calculateShipment(shipmentRequest, melhorEnvioApiKey);
       shipmentData.forEach((service: any) => {
-        if (!service.error) {
+        if (!service.error && AGENCIAS_VALIDAS.includes(service.name)) {
           deliveryOptions.push({
             prazo: `${service.delivery_time} dias úteis`,
+            Agencia:  `${service.name}`, 
             price: `${service.currency} ${service.price}`,
+
           });
         }
       });
